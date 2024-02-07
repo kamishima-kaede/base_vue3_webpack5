@@ -5,6 +5,6 @@ module.exports = {
     source: 'src',
     img: 'src',
     image: ['xlink:href', 'href'],
-    use: ['xlink:href', 'href']
-  }
+    use: ['xlink:href', 'href'],
+  },
 };

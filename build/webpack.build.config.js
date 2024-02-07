@@ -1,89 +1,145 @@
 'use strict';
-const path = require('path');
-const { VueLoaderPlugin } = require('vue-loader');
-const vueLoaderConfig = require('./vue-loader.config');
+const path = require('node:path');
+const webpack = require('webpack');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinizerPlugin = require('css-minimizer-webpack-plugin');
+const CompressionPlugin = require('compression-webpack-plugin');
+const { merge } = require('webpack-merge');
+const baseWebpackConfig = require('./webpack.base.config');
+const utils = require('./utils');
 const config = require('../config');
 
+const EnvConfig = require('../config/' + process.env.RUN_ENV.trim() + '.env');
 
-module.exports = {
+const webpackConfig = merge(baseWebpackConfig, {
+  mode: 'production',
+  devtool: false,
   output: {
-    filename: '[name].[fullhash:8].js',
     path: config.build.assetsRoot,
-    clean: true
+    filename: utils.assetsPath('js/[name].[chunkhash:8].js'),
+    chunkFilename: utils.assetsPath('js/[name].[chunkhash:8].js'),
+    clean: true,
   },
   module: {
     rules: [
+      // css
+      {
+        test: /\.css$/i,
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader,
+          },
+          {
+            loader: 'css-loader',
+            options: { sourceMap: config.build.cssSourceMap, importLoaders: 1 },
+          },
+          {
+            loader: 'postcss-loader',
+            options: { sourceMap: config.build.cssSourceMap },
+          },
+        ],
+      },
+      // less
+      {
+        test: /\.less$/i,
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader,
+          },
+          {
+            loader: 'css-loader',
+            options: { sourceMap: config.build.cssSourceMap, importLoaders: 2 },
+          },
+          {
+            loader: 'postcss-loader',
+            options: { sourceMap: config.build.cssSourceMap },
+          },
+          {
+            loader: 'less-loader',
+            options: { sourceMap: config.build.cssSourceMap },
+          },
+        ],
+      },
       // images
       {
         test: /\.(png|jpe?g|gif|webp|avif)(\?.*)?$/,
         type: 'asset',
+        // exclude: [],
         generator: {
-          filename: 'img/[name].[hash:8][ext]'
-        }
+          filename: utils.assetsPath('img/[name].[hash:8][ext]'),
+        },
+        parser: {
+          dataUrlCondition: {
+            maxSize: 1024 * 1000,
+          },
+        },
       },
-      // media
-      {
-        test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/,
-        type: 'asset',
-        generator: {
-          filename: 'media/[name].[hash:8][ext]'
-        }
-      },
-      // fonts
       {
         test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/i,
         type: 'asset',
+        // exclude: [],
         generator: {
-          filename: 'fonts/[name].[hash:8][ext]'
-        }
+          filename: utils.assetsPath('fonts/[name].[hash:8][ext]'),
+        },
+        parser: {
+          dataUrlCondition: {
+            maxSize: 1024 * 1000,
+          },
+        },
       },
-      // css
-      {
-        test: /\.css$/,
-        use: [
-          {
-            loader: 'vue-style-loader',
-            options: { sourceMap: true, shadowMode: false }
-          },
-          {
-            loader: 'css-loader',
-            options: { sourceMap: true, importLoaders: 2 }
-          },
-          {
-            loader: 'postcss-loader',
-            options: { sourceMap: true }
-          }
-        ]
-      },
-      // less
-      {
-        test: /\.less$/,
-        use: [
-          {
-            loader: 'vue-style-loader',
-            options: { sourceMap: true, shadowMode: false }
-          },
-          {
-            loader: 'css-loader',
-            options: { sourceMap: true, importLoaders: 2 }
-          },
-          {
-            loader: 'postcss-loader',
-            options: { sourceMap: true }
-          },
-          {
-            loader: 'less-loader',
-            options: { sourceMap: true }
-          }
-        ]
-      },
-      // js
-      {
-        test: /\.m?jsx?$/,
-        exclude: file => /node_modules/.test(file) && !/\.vue\.js/.test(file),
-        use: [{ loader: 'babel-loader' }]
-      }
-    ]
+    ],
   },
-  plugins: [new VueLoaderPlugin()]
-};
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env': EnvConfig,
+    }),
+    new HtmlWebpackPlugin({
+      filename: 'index.html',
+      template: 'public/index.html',
+      title: 'hello world',
+      inject: true,
+      minify: true,
+      chunksSortMode: 'auto',
+    }),
+    new MiniCssExtractPlugin({
+      filename: utils.assetsPath('css/[name].[contenthash].css'),
+      ignoreOrder: true,
+    }),
+    // new CopyWebpackPlugin({
+    //   patterns: [
+    //     {
+    //       from: '',
+    //       to: ''
+    //     }
+    //   ]
+    // }),
+    new CompressionPlugin({
+      algorithm: 'gzip',
+      test: /\.(js|css|ttf|woff)(\?.*)?$/i,
+      threshold: 1024 * 10,
+    }),
+  ],
+  optimization: {
+    moduleIds: 'deterministic',
+    runtimeChunk: 'single',
+    splitChunks: {
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'venders',
+          chunks: 'all',
+        },
+      },
+    },
+    minimizer: [`...`, new CssMinizerPlugin()],
+  },
+});
+
+if (config.build.bundleAnalyzerReport) {
+  const BundleAnalyzerPlugin = require('webpack-bundle-analyzer-report').BundleAnalyzerPlugin;
+  webpackConfig.plugins.push(new BundleAnalyzerPlugin());
+}
+
+module.exports = webpackConfig;

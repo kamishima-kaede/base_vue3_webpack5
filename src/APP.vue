@@ -1,14 +1,21 @@
 <template>
-  <div>
-    aaa
-    <button @click="testFunction">点击我</button>
-    数字:{{ state.count }}
+  <div class="app-a">
+    {{ count }}
+    <button @click="handleAdd">+1</button>
   </div>
 </template>
+
 <script setup>
-  import { reactive } from 'vue'
-  const state = reactive({ count: 0 })
-  const testFunction = () => {
-    state.count++
-  }
+  import { ref } from 'vue';
+  const count = ref(0);
+
+  const handleAdd = () => {
+    count.value += 1;
+  };
 </script>
+
+<style lang="less" scoped>
+  .app-a {
+    margin-top: 20px;
+  }
+</style>

@@ -1,5 +1,5 @@
 'use strict';
-const path = require('path');
+const path = require('node:path');
 const { VueLoaderPlugin } = require('vue-loader');
 const NodePolyfillWebpackPlugin = require('node-polyfill-webpack-plugin');
 const vueLoaderConfig = require('./vue-loader.config');
@@ -18,21 +18,20 @@ module.exports = {
   resolve: {
     extensions: ['.js', '.vue', '.json'],
     alias: {
-      '@': resolve('src')
-      // 'api':resolve('src/api')
-    }
+      '@': resolve('src'),
+    },
   },
   module: {
     rules: [
       {
         test: /\.vue$/,
-        use: [{ loader: 'vue-loader', options: vueLoaderConfig }]
+        use: [{ loader: 'vue-loader' }],
       },
 
       {
         test: /\.m?js?$/,
         use: [{ loader: 'babel-loader' }],
-        exclude: file => /node_modules/.test(file) && !/\.vue\.js/.test(file)
+        exclude: file => /node_modules/.test(file) && !/\.vue\.js/.test(file),
       },
       {
         test: /\.svg$/,
@@ -40,14 +39,14 @@ module.exports = {
           {
             loader: 'svg-sprite-loader',
             options: {
-              symbolId: 'icon-[name]'
-            }
-          }
+              symbolId: 'icon-[name]',
+            },
+          },
         ],
-        include: [resolve('src/icons')]
-      }
-    ]
+        include: [resolve('src/icons')],
+      },
+    ],
   },
   plugins: [new VueLoaderPlugin(), new NodePolyfillWebpackPlugin()],
-  target: 'browserslist'
+  target: 'browserslist',
 };

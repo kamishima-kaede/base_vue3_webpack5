@@ -2,7 +2,3 @@
 **/.svn
 **/.hg
 **/node_modules
-/dist/*
-**/*.svg
-**/*.sh
-/public/*

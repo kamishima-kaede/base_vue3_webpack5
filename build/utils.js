@@ -14,5 +14,5 @@ const assetsPath = _path => {
 
 module.exports = {
   resolve,
-  assetsPath
+  assetsPath,
 };
